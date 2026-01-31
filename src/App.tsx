@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import { UserAuthProvider } from './contexts/AuthContext';
 
 // Dashboard Components
 import DashboardLayout from './pages/dashboard/DashboardLayout';
@@ -39,46 +40,58 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <ToastProvider>
         <Router>
-          <ScrollToTop />
-          <Routes>
-            {/* Dashboard Routes */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardOverview />} />
-              <Route path="bookings" element={<MyBookings />} />
-              <Route path="saved" element={<SavedVendors />} />
-              <Route path="payments" element={<Payments />} />
-              <Route path="guests" element={<GuestList />} />
-              <Route path="invites" element={<DigitalInvites />} />
-              <Route path="support" element={<Support />} />
-            </Route>
+          <UserAuthProvider>
+            <ScrollToTop />
+            <Routes>
+              {/* Auth Routes - No Header/Footer */}
+              <Route path="/login" element={
+                <Suspense fallback={<PageLoader />}>
+                  <Login />
+                </Suspense>
+              } />
+              <Route path="/signup" element={
+                <Suspense fallback={<PageLoader />}>
+                  <Signup />
+                </Suspense>
+              } />
 
-            {/* Main Website Routes */}
-            <Route path="*" element={
-              <div className="min-h-screen bg-white dark:bg-slate-950 grid-bg flex flex-col transition-colors duration-300">
-                <Header />
-                <div className="flex-grow">
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/event/:id" element={<EventDetails />} />
-                      <Route path="/category/:category" element={<CategoryPage />} />
-                      <Route path="/trending-weddings" element={<TrendingWeddings />} />
-                      <Route path="/plan-event" element={<PlanEvent />} />
-                      <Route path="/inspiration" element={<Inspiration />} />
-                      <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/signup" element={<Signup />} />
-                      <Route path="/about" element={<AboutUs />} />
-                      <Route path="/contact" element={<ContactUs />} />
-                      <Route path="/packages" element={<Packages />} />
-                      <Route path="/become-vendor" element={<BecomeVendor />} />
-                    </Routes>
-                  </Suspense>
+              {/* Dashboard Routes */}
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<DashboardOverview />} />
+                <Route path="bookings" element={<MyBookings />} />
+                <Route path="saved" element={<SavedVendors />} />
+                <Route path="payments" element={<Payments />} />
+                <Route path="guests" element={<GuestList />} />
+                <Route path="invites" element={<DigitalInvites />} />
+                <Route path="support" element={<Support />} />
+              </Route>
+
+              {/* Main Website Routes with Header/Footer */}
+              <Route path="*" element={
+                <div className="min-h-screen bg-white dark:bg-slate-950 grid-bg flex flex-col transition-colors duration-300">
+                  <Header />
+                  <div className="flex-grow">
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/event/:id" element={<EventDetails />} />
+                        <Route path="/category/:category" element={<CategoryPage />} />
+                        <Route path="/trending-weddings" element={<TrendingWeddings />} />
+                        <Route path="/plan-event" element={<PlanEvent />} />
+                        <Route path="/inspiration" element={<Inspiration />} />
+                        <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+                        <Route path="/about" element={<AboutUs />} />
+                        <Route path="/contact" element={<ContactUs />} />
+                        <Route path="/packages" element={<Packages />} />
+                        <Route path="/become-vendor" element={<BecomeVendor />} />
+                      </Routes>
+                    </Suspense>
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
-              </div>
-            } />
-          </Routes>
+              } />
+            </Routes>
+          </UserAuthProvider>
         </Router>
       </ToastProvider>
     </ErrorBoundary>

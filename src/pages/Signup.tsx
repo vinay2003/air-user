@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUserAuth } from '../contexts/AuthContext';
+import api from '../lib/apiClient';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 
 const Signup: React.FC = () => {
     const navigate = useNavigate();
+    const { login } = useUserAuth();
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -17,15 +24,59 @@ const Signup: React.FC = () => {
         confirmPassword: '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match!');
+            setError('Passwords do not match');
             return;
         }
-        // TODO: Implement actual signup logic
-        console.log('Signup attempt:', formData);
-        navigate('/login');
+
+        // Enhanced password validation (12 characters minimum)
+        if (formData.password.length < 12) {
+            setError('Password must be at least 12 characters');
+            return;
+        }
+
+        // Check password complexity
+        const hasUpperCase = /[A-Z]/.test(formData.password);
+        const hasLowerCase = /[a-z]/.test(formData.password);
+        const hasNumber = /\d/.test(formData.password);
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
+
+        if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecial) {
+            setError('Password must contain uppercase, lowercase, number, and special character');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const response = await api.post('/auth/signup', {
+                name: formData.name,
+                email: formData.email,
+                phoneNumber: formData.phone,
+                password: formData.password,
+                role: 'user'
+            });
+
+            console.log('✅ User signup successful');
+
+            if (response.data.access_token) {
+                login(response.data.access_token);
+                setSuccess(true);
+                setTimeout(() => {
+                    navigate('/');
+                }, 1500);
+            }
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || 'Signup failed. Please try again.';
+            setError(errorMessage);
+            console.error('Signup Error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -90,26 +141,32 @@ const Signup: React.FC = () => {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password" className="dark:text-slate-200">Password</Label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-slate-500" />
                                 <Input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="••••••••"
-                                    className="pl-10 pr-10"
+                                    className="pl-10 pr-10 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                     value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, password: e.target.value });
+                                        setError('');
+                                    }}
                                     required
+                                    disabled={loading}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-3 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
                                 >
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
+                            {/* Password strength meter */}
+                            <PasswordStrengthMeter password={formData.password} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="confirmPassword">Confirm Password</Label>

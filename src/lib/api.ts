@@ -1,4 +1,5 @@
 import type { Event } from '../types';
+import axios from 'axios';
 
 // Mock Data
 const MOCK_EVENTS: Event[] = [
@@ -15,6 +16,49 @@ const MOCK_EVENTS: Event[] = [
     { id: '11', title: 'Co-working Space', category: 'Meetups', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1000&auto=format&fit=crop', rating: 4.6, location: 'Hyderabad', reviews: 82, price: '₹8,000', capacity: '20-50', description: 'Professional environment for workshops and seminars.' },
     { id: '12', title: 'Library Hall', category: 'Meetups', image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?q=80&w=1000&auto=format&fit=crop', rating: 4.5, location: 'Chennai', reviews: 41, price: '₹6,000', capacity: '30-80', description: 'Quiet and spacious hall suitable for reading clubs and discussions.' },
 ];
+
+// Create axios instance with base URL
+const api = axios.create({
+    baseURL: import.meta.env.VITE_API_URL || 'https://airion-backend.onrender.com',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Request interceptor for debugging and auth
+api.interceptors.request.use(
+    (config) => {
+        console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+
+        // Add auth token if available
+        const token = localStorage.getItem('token');
+        if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Unauthorized - clear token and redirect to login
+            localStorage.removeItem('token');
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
+export default api;
 
 export const fetchEvents = async (): Promise<Event[]> => {
     // Simulate API delay
