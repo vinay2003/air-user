@@ -7,14 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserAuth } from '../contexts/AuthContext';
-import api from '../lib/apiClient';
 import LoadingButton from '../../../shared/components/LoadingButton';
 import StatusAlert from '../../../shared/components/StatusAlert';
 import SocialLoginButtons from '../../../shared/components/SocialLoginButtons';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
-    const { login } = useUserAuth();
+    const { login, loginWithToken } = useUserAuth();
     const [searchParams] = useSearchParams();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -39,11 +38,11 @@ const Login: React.FC = () => {
     useEffect(() => {
         const token = searchParams.get('token');
         if (token) {
-            login(token);
+            loginWithToken(token);
             setSuccess(true);
             setTimeout(() => navigate('/'), 1500);
         }
-    }, [searchParams, login, navigate]);
+    }, [searchParams, loginWithToken, navigate]);
 
     const getErrorMessage = (errorMsg: string): { title: string; suggestion: string } => {
         if (errorMsg.toLowerCase().includes('invalid') || errorMsg.toLowerCase().includes('credentials')) {
@@ -76,10 +75,7 @@ const Login: React.FC = () => {
         setError('');
 
         try {
-            const response = await api.post('/auth/login', {
-                email: formData.email,
-                password: formData.password,
-            });
+            await login(formData.email, formData.password);
 
             // Save email if remember me is checked
             if (rememberMe) {
@@ -89,7 +85,6 @@ const Login: React.FC = () => {
             }
 
             console.log('✅ User login successful');
-            login(response.data.access_token);
             setSuccess(true);
             setTimeout(() => navigate('/'), 1500);
         } catch (err: any) {

@@ -12,6 +12,7 @@ interface User {
 interface UserAuthContextType {
     user: User | null;
     login: (email: string, password: string) => Promise<any>;
+    loginWithToken: (token: string) => Promise<void>;
     logout: () => void;
     loading: boolean;
     isAuthenticated: boolean;
@@ -49,6 +50,11 @@ export const UserAuthProvider: React.FC<UserAuthProviderProps> = ({ children }) 
         } catch (error) {
             throw error;
         }
+    };
+
+    const loginWithToken = async (token: string) => {
+        localStorage.setItem('token', token);
+        await checkAuth();
     };
 
     const logout = async () => {
@@ -119,6 +125,7 @@ export const UserAuthProvider: React.FC<UserAuthProviderProps> = ({ children }) 
     const value: UserAuthContextType = {
         user,
         login,
+        loginWithToken,
         logout,
         loading,
         isAuthenticated: !!user,
