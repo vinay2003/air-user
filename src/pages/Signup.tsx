@@ -71,12 +71,16 @@ const Signup: React.FC = () => {
             // where: dto.phone ? { phoneNumber: dto.phone } : { email: dto.email }
             // It prioritizes phone.
 
-            await api.post('/auth/signup/send-otp', {
+            const response = await api.post('/auth/signup/send-otp', {
                 phone: formData.phone,
                 email: formData.email
             });
 
-            setSuccess('OTP sent successfully to your phone!');
+            if (response.data.otp) {
+                setSuccess(`OTP sent! Your code is: ${response.data.otp}`);
+            } else {
+                setSuccess('OTP sent successfully to your phone!');
+            }
             setStep('otp');
         } catch (err: any) {
             let errorMessage = 'Failed to send OTP. Please try again.';
